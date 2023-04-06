@@ -1,0 +1,103 @@
+.Calculator {
+  width: 100vmin;
+  height: 100vmin;
+  position: relative;
+  
+  &__inner {
+    width: 100%;
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+
+    display: flex;
+    flex-direction: column;
+    padding: 6rem;
+  }
+
+  &__display {
+    height: 25%;
+    border-radius: 1vmin;
+    margin-bottom: 1vmin;
+    border: 0.5rem solid rgba(white, .5);
+    color: rgba(white, .8);
+
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 5%;
+    font-size: 6.5rem;
+    font-weight: 800;
+    overflow: hidden;
+
+    font-family: 'Space Mono', monospace;
+  }
+
+  &__grid {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1vmin;
+
+    button {
+      font-family: 'Space Mono', monospace;
+      border: none;
+      border-radius: 1vmin;
+      color: white;
+      font-size: 6.5rem;
+      line-height: 1rem;
+      padding: 0;
+      
+      background-color: rgba(white, .05);
+    
+      &:hover {
+        background-color: rgba(white, .08);
+      }
+    
+      &:active {
+        background-color: rgba(white, .1);
+      }
+    
+      &[value="/"],
+      &[value="*"],
+      &[value="-"],
+      &[value="+"],
+      &[value="="] {
+        background-color: rgba(white, .1);
+    
+        &:hover {
+          background-color: rgba(white, .13);
+        }
+    
+        &:active {
+          background-color: rgba(white, .15);
+        }
+      }
+    
+      &[value="ac"],
+      &[value="%"],
+      &[value="neg"] {
+        background-color: rgba(white, .02);
+    
+        &:hover {
+          background-color: rgba(white, .05);
+        }
+    
+        &:active {
+          background-color: rgba(white, .07);
+        }
+      }
+    
+      &[value="0"] {
+        grid-column: span 2;
+      }
+    
+      &[value="ac"],
+      &[value="neg"] {
+        font-size: 4rem;
+        text-transform: uppercase;
+      }
+    }
+  }
+}
