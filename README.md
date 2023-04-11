@@ -6,9 +6,7 @@ A basic calculator made with love
 - Undo last operation
 - Scroll through operation history
 - Keyboard support
-
-### Bugs
-- Adding operations after percent removes the percent symbol
+- Division by zero shouldn't equal Infinity
 
 ### Usage
 ```npm install```

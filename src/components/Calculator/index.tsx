@@ -27,7 +27,7 @@ interface Display {
 
 const buttons: Button[] = [
   { name: "clear", value: "ac", type: "special" },
-  { name: "percent", value: "%", type: "operation" },
+  { name: "percent", value: "%", type: "value" },
   { name: "negate", value: "neg", type: "special" },
   { name: "divide", value: "/", type: "operation" },
   { name: "seven", value: "7", type: "value" },
@@ -84,19 +84,19 @@ function Calculator() {
     if (button.value === "ac") return resetCalculator()
 
     const symbols = current.value;
-    const lastSymbol = symbols[symbols.length - 1];
+    const lastSymbol = symbols[symbols.length - 1]
     const secondToLastSymbol = symbols[symbols.length - 2]
 
     const splitParts: string[] = current.value
       .map(item => item.value)
       .join("")
       .split(/[*+\/-]+|[A-Za-z]+/) //from https://stackoverflow.com/a/51700918
-    
-    const lastPart = splitParts[splitParts.length-1]
+
+    const lastPart = splitParts[splitParts.length - 1]
 
     if (button.value === "." && lastPart.indexOf('.') !== -1) return false //limit to one decimal between operations
     if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) symbols.pop() //stop operation after
-    if (button.type === "operation" && isNaN(Number(lastSymbol.value))) symbols.pop() //stop multiple operations
+    if (button.type === "operation" && isNaN(Number(lastSymbol.value)) && lastSymbol.value !== "%") symbols.pop() //stop multiple operations
 
     const symbol: Symbol = { type: "button", source: button, value: button.value }
     const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && lastSymbol.type === "answer") ? [symbol] : [...symbols, symbol]
