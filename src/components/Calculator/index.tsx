@@ -85,9 +85,16 @@ function Calculator() {
     const lastSymbol = symbols[symbols.length - 1];
     const secondToLastSymbol = symbols[symbols.length - 2]
 
-    if (button.value === "." && lastSymbol.value === ".") return false
-    if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) symbols.pop()
-    if (button.type === "operation" && isNaN(Number(lastSymbol.value))) symbols.pop()
+    const splitParts: string[] = current.value
+      .map(item => item.value)
+      .join("")
+      .split(/[*+\/-]+|[A-Za-z]+/) //from https://stackoverflow.com/a/51700918
+    
+    const lastPart = splitParts[splitParts.length-1]
+
+    if (button.value === "." && lastPart.indexOf('.') !== -1) return false //limit to one decimal between operations
+    if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) symbols.pop() //stop operation after
+    if (button.type === "operation" && isNaN(Number(lastSymbol.value))) symbols.pop() //stop multiple operations
 
     const symbol: Symbol = { type: "button", source: button, value: button.value }
     const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && lastSymbol.type === "answer") ? [symbol] : [...symbols, symbol]
