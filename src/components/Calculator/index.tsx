@@ -1,6 +1,8 @@
 import './style.scss'
 import { useState } from "react"
-import { evaluate } from 'mathjs'
+import { create, all } from 'mathjs'
+
+const math = create(all, { number: "BigNumber" })
 
 interface Button {
   name: string
@@ -119,7 +121,7 @@ function Calculator() {
     }
 
     try {
-      const test: number = evaluate(solve)
+      const test: number = math.evaluate(solve)
       const answer: Answer = { value: test, source: current }
       const symbol: Symbol = { value: test.toString(), type: "answer", source: answer }
       const display: Display = { value: [symbol] }
@@ -142,7 +144,7 @@ function Calculator() {
     })
 
     try {
-      const test: number = evaluate(solve + "* -1")
+      const test: number = math.evaluate(solve + "* -1")
       const answer: Answer = { value: test, source: current }
       const symbol: Symbol = { value: test.toString(), type: "answer", source: answer }
       const display: Display = { value: [symbol] }
