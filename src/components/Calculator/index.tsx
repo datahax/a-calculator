@@ -68,7 +68,7 @@ const makeOperatorsLookNicer = (label: string) => {
 }
 
 const isOperation = (value: string) => {
-  return ["+", "-", "/", "*"].indexOf(value.slice(-1)) !== -1
+  return !!buttons.filter(item => item.type === "operation").filter(item => item.value === value).length
 }
 
 function Calculator() {
@@ -95,11 +95,12 @@ function Calculator() {
     const lastPart = splitParts[splitParts.length - 1]
 
     if (button.value === "." && lastPart.indexOf('.') !== -1) return false //limit to one decimal between operations
-    if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) symbols.pop() //stop operation after
+    if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) symbols.pop() //stop double operations with decimal symbol inbetween
     if (button.type === "operation" && isNaN(Number(lastSymbol.value)) && lastSymbol.value !== "%") symbols.pop() //stop multiple operations
+    if (button.value === "%" && isNaN(Number(lastSymbol.value))) return false //only add percent after numbers
 
     const symbol: Symbol = { type: "button", source: button, value: button.value }
-    const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && lastSymbol.type === "answer") ? [symbol] : [...symbols, symbol]
+    const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && button.value !== "%" && lastSymbol.type === "answer") ? [symbol] : [...symbols, symbol]
     const display: Display = { value: [...displayValue] }
 
     setCurrent(display)
@@ -132,7 +133,6 @@ function Calculator() {
       const symbol: Symbol = { value: "ERR", type: "error", source: answer }
       const display: Display = { value: [symbol] }
       setCurrent(display)
-      return
     }
   }
 
