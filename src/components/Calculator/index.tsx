@@ -1,5 +1,5 @@
 import './style.scss'
-import { useState } from "react"
+import { useState, useEffect } from 'react'
 import { create, all } from 'mathjs'
 
 const math = create(all, { number: "BigNumber" })
@@ -47,7 +47,7 @@ const buttons: Button[] = [
   { name: "equal", value: "=", type: "operation" },
 ]
 
-const defaultValue: Symbol = { value: "0", type: "answer", source: 'root' }
+const defaultValue: Symbol = { value: "0", type: "answer", source: "root" }
 const defaultDisplay: Display = { value: [defaultValue] }
 
 const makeOperatorsLookNicer = (label: string) => {
@@ -68,14 +68,49 @@ const makeOperatorsLookNicer = (label: string) => {
 }
 
 const isOperation = (value: string) => {
-  return ["+", "-", "/", "*"].indexOf(value.slice(-1)) !== -1
+  return !!buttons.filter(item => item.type === "operation").filter(item => item.value === value).length
 }
 
 function Calculator() {
   const [current, setCurrent] = useState<Display>(defaultDisplay)
 
+  // handle what happens on key press
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (buttons.filter(item => item.value === event.key).length) {
+      event.preventDefault()
+      buttons.filter(item => item.value === event.key).map(item => handleClick(item))
+    }
+
+    if (event.key === "Enter") handleEqual()
+    if (event.key === "c" || event.key === "Clear") resetCalculator()
+    if (event.key === ",") buttons.filter(item => item.value === ".").map(item => handleClick(item))
+    if (event.key === "Backspace") removeLastSymbol()
+  }
+
+  useEffect(() => {
+    // attach the event listener on mount
+    document.addEventListener("keydown", handleKeyPress)
+
+    // remove the event listener on unmount
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress)
+    }
+  }, [handleKeyPress])
+
+  const removeLastSymbol = () => {
+    const symbols = current.value
+    if (symbols.length > 1) {
+      symbols.pop()
+      const displayValue: Symbol[] = [...symbols]
+      const display: Display = { value: [...displayValue] }
+      setCurrent(display)
+    } else {
+      setCurrent(defaultDisplay)
+    }
+  }
+
   const resetCalculator = () => {
-    setCurrent(defaultDisplay);
+    setCurrent(defaultDisplay)
   }
 
   const handleClick = (button: Button) => {
@@ -83,10 +118,9 @@ function Calculator() {
     if (button.value === "neg") return handleNeg()
     if (button.value === "ac") return resetCalculator()
 
-    const symbols = current.value;
+    const symbols = current.value
     const lastSymbol = symbols[symbols.length - 1]
     const secondToLastSymbol = symbols[symbols.length - 2]
-
     const splitParts: string[] = current.value
       .map(item => item.value)
       .join("")
@@ -94,31 +128,44 @@ function Calculator() {
 
     const lastPart = splitParts[splitParts.length - 1]
 
-    if (button.value === "." && lastPart.indexOf('.') !== -1) return false //limit to one decimal between operations
-    if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) symbols.pop() //stop operation after
-    if (button.type === "operation" && isNaN(Number(lastSymbol.value)) && lastSymbol.value !== "%") symbols.pop() //stop multiple operations
+    //limit to one decimal between operations
+    if (button.value === "." && lastPart.indexOf(".") !== -1) {
+      return false
+    }
+
+    //stop double operations with decimal symbol inbetween
+    if (button.type === "operation" && lastSymbol.value === "." && isOperation(secondToLastSymbol.value)) {
+      symbols.pop()
+    }
+
+    //stop multiple operations
+    if (button.type === "operation" && isNaN(Number(lastSymbol.value)) && lastSymbol.value !== "%") {
+      symbols.pop()
+    }
+
+    //only add percent after numbers
+    if (button.value === "%" && isNaN(Number(lastSymbol.value))) {
+      return false
+    }
 
     const symbol: Symbol = { type: "button", source: button, value: button.value }
-    const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && lastSymbol.type === "answer") ? [symbol] : [...symbols, symbol]
+    const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && button.value !== "%" && ["answer", "error"].indexOf(lastSymbol.type) !== -1) ? [symbol] : [...symbols, symbol]
     const display: Display = { value: [...displayValue] }
 
     setCurrent(display)
   }
 
   const handleEqual = () => {
-    const symbols = current.value;
-    const lastSymbol = symbols[symbols.length - 1];
+    const symbols = current.value
+    const lastSymbol = symbols[symbols.length - 1]
 
-    if (lastSymbol.value === ".") symbols.pop()
+    //remove last symbol in calculation if it is a decimal or operation
+    if (lastSymbol.value === "." || isOperation(lastSymbol.value)) symbols.pop()
 
-    let solve: string = "";
+    let solve: string = ""
     symbols.map((item) => {
       solve += item.value
     })
-
-    if (isOperation(solve)) {
-      solve = solve.slice(0, -1)
-    }
 
     try {
       const test: number = math.evaluate(solve)
@@ -132,13 +179,12 @@ function Calculator() {
       const symbol: Symbol = { value: "ERR", type: "error", source: answer }
       const display: Display = { value: [symbol] }
       setCurrent(display)
-      return
     }
   }
 
   const handleNeg = () => {
-    const symbols = current.value;
-    let solve: string = "";
+    const symbols = current.value
+    let solve: string = ""
     symbols.map((item) => {
       solve += item.value
     })
@@ -155,7 +201,6 @@ function Calculator() {
       const symbol: Symbol = { value: "ERR", type: "error", source: answer }
       const display: Display = { value: [symbol] }
       setCurrent(display)
-      return
     }
   }
 
