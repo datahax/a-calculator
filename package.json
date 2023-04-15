@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build --base=/dev/a-calculator/",
+    "build": "tsc && vite build --base=/a-calculator/",
     "preview": "vite preview"
   },
   "dependencies": {
