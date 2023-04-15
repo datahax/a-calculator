@@ -2,6 +2,7 @@
   width: 100vmin;
   height: 100vmin;
   position: relative;
+  font-family: 'Space Mono', monospace;
   
   &__inner {
     width: 100%;
@@ -10,38 +11,57 @@
     left:0;
     right:0;
     bottom:0;
+    padding: 6rem;
+  }
+  
+  &__backplate {
+    width: 100%;
+    height: 100%;
 
     display: flex;
     flex-direction: column;
-    padding: 6rem;
+    gap: 1vmin;
+    padding: 1vmin;
+    background-color: rgba(white, .01);
+    border-radius: 2vmin;
   }
 
   &__display {
+    box-sizing: border-box;
     height: 25%;
     border-radius: 1vmin;
-    margin-bottom: 1vmin;
-    border: 0.5rem solid rgba(white, .5);
-    color: rgba(white, .8);
-
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
+    background-color: rgba(white, .01);
     padding: 5%;
-    font-size: 6.5rem;
-    font-weight: 800;
-    overflow: hidden;
+  }
 
-    font-family: 'Space Mono', monospace;
+  &__display-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  &__calculation {
+    font-size: 5rem;
+    color: rgba(white, .4);
+  }
+
+  &__answer {
+    font-size: 6.5rem;
+    color: rgba(white, .8);
+    font-weight: 800;
   }
 
   &__grid {
-    height: 100%;
+    height: 75%;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 1vmin;
 
     button {
-      font-family: 'Space Mono', monospace;
       border: none;
       border-radius: 1vmin;
       color: white;
@@ -49,7 +69,7 @@
       line-height: 1rem;
       padding: 0;
       
-      background-color: rgba(white, .05);
+      background-color: rgba(white, .06);
     
       &:hover {
         background-color: rgba(white, .08);
@@ -57,6 +77,8 @@
     
       &:active {
         background-color: rgba(white, .1);
+
+        transform: scale(.97)
       }
     
       &[value="/"],
@@ -64,21 +86,21 @@
       &[value="-"],
       &[value="+"],
       &[value="="] {
-        background-color: rgba(white, .1);
+        background-color: rgba(white, .12);
     
         &:hover {
-          background-color: rgba(white, .13);
+          background-color: rgba(white, .14);
         }
     
         &:active {
-          background-color: rgba(white, .15);
+          background-color: rgba(white, .16);
         }
       }
     
       &[value="ac"],
       &[value="%"],
       &[value="neg"] {
-        background-color: rgba(white, .02);
+        background-color: rgba(white, .03);
     
         &:hover {
           background-color: rgba(white, .05);
