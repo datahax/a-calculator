@@ -1,8 +1,8 @@
 import './style.scss'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { create, all } from 'mathjs'
 
-const math = create(all, { number: "BigNumber" })
+const math = create(all, { number: "BigNumber", epsilon: 1e-8, })
 
 interface Button {
   name: string
@@ -71,8 +71,99 @@ const isOperation = (value: string) => {
   return !!buttons.filter(item => item.type === "operation").filter(item => item.value === value).length
 }
 
+const doMath = (current: Display) => {
+  const symbols = current.value
+  const lastSymbol = symbols[symbols.length - 1]
+
+  //remove last symbol in calculation if it is a decimal or operation
+  const trimSymbols = (lastSymbol.value === "." || isOperation(lastSymbol.value)) ? symbols.slice(0, -1) : symbols
+
+  let solve: string = ""
+  trimSymbols.map((item) => {
+    solve += item.value
+  })
+
+  let symbol: Symbol
+  try {
+    const test: number = math.evaluate(solve)
+    const answer: Answer = { value: test, source: current }
+    symbol = { value: test.toString(), type: "answer", source: answer }
+  } catch (error) {
+    console.log(error)
+    const answer: Answer = { value: -1, source: current }
+    symbol = { value: "ERR", type: "error", source: answer }
+  }
+  const answerDisplay: Display = { value: [symbol] }
+  return answerDisplay
+}
+
+const CalculatorDisplay = (props: { current: Display }) => {
+  const currentCalculation = props.current
+  const displayRef = useRef<HTMLDivElement>(null)
+  const calculationRef = useRef<HTMLDivElement>(null)
+  const answerRef = useRef<HTMLDivElement>(null)
+  const [displayWidth, setDisplayWidth] = useState<number | undefined>(0)
+  const [calculationWidth, setCalculationWidth] = useState<number | undefined>(0)
+  const [answerWidth, setAnswerWidth] = useState<number | undefined>(0)
+
+  useLayoutEffect(() => {
+    setDisplayWidth(displayRef?.current?.offsetWidth)
+    setCalculationWidth(calculationRef?.current?.offsetWidth)
+    setAnswerWidth(answerRef?.current?.offsetWidth)
+  }, [props.current]);
+
+  useEffect(() => {
+    function handleWindowResize() {
+      setDisplayWidth(displayRef?.current?.offsetWidth)
+      setCalculationWidth(calculationRef?.current?.offsetWidth)
+      setAnswerWidth(answerRef?.current?.offsetWidth)
+    }
+
+    handleWindowResize()
+
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
+
+  const answerText: string = doMath(currentCalculation).value.map((item) => { return makeOperatorsLookNicer(item.value) }).join("")
+  const calculationText: string = currentCalculation.value.map((item) => { return makeOperatorsLookNicer(item.value) }).join("")
+
+  const FitText = (props: { text: string, elementWidth: number | undefined, parentWidth: number | undefined }) => {
+
+    const { elementWidth, parentWidth } = props
+
+    let scale: number = 1
+    if (typeof elementWidth === "number" && typeof parentWidth === "number") {
+      const ratio = parentWidth / elementWidth
+      scale = ratio <= 1 ? ratio : 1
+    }
+
+    scale = parseFloat(scale.toFixed(5))
+
+    return (
+      <span style={{ display: "inline-block", transformOrigin: "right", transform: "scale(" + scale + ")" }}>{props.text}</span>
+    )
+  }
+
+  return (
+    <div className="Calculator__display">
+      <div className="Calculator__display-inner" ref={displayRef}>
+        <div className="Calculator__calculation" ref={calculationRef}>
+          <FitText text={calculationText} elementWidth={calculationWidth} parentWidth={displayWidth} />
+        </div>
+        <div className="Calculator__answer" ref={answerRef}>
+          <FitText text={answerText} elementWidth={answerWidth} parentWidth={displayWidth} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Calculator() {
-  const [current, setCurrent] = useState<Display>(defaultDisplay)
+  const [currentCalculation, setCurrentCalculation] = useState<Display>(defaultDisplay)
 
   // handle what happens on key press
   const handleKeyPress = (event: KeyboardEvent) => {
@@ -98,19 +189,19 @@ function Calculator() {
   }, [handleKeyPress])
 
   const removeLastSymbol = () => {
-    const symbols = current.value
+    const symbols = currentCalculation.value
     if (symbols.length > 1) {
       symbols.pop()
       const displayValue: Symbol[] = [...symbols]
       const display: Display = { value: [...displayValue] }
-      setCurrent(display)
+      setCurrentCalculation(display)
     } else {
-      setCurrent(defaultDisplay)
+      setCurrentCalculation(defaultDisplay)
     }
   }
 
   const resetCalculator = () => {
-    setCurrent(defaultDisplay)
+    setCurrentCalculation(defaultDisplay)
   }
 
   const handleClick = (button: Button) => {
@@ -118,10 +209,10 @@ function Calculator() {
     if (button.value === "neg") return handleNeg()
     if (button.value === "ac") return resetCalculator()
 
-    const symbols = current.value
+    const symbols = currentCalculation.value
     const lastSymbol = symbols[symbols.length - 1]
     const secondToLastSymbol = symbols[symbols.length - 2]
-    const splitParts: string[] = current.value
+    const splitParts: string[] = currentCalculation.value
       .map(item => item.value)
       .join("")
       .split(/[*+\/-]+|[A-Za-z]+/) //from https://stackoverflow.com/a/51700918
@@ -149,14 +240,23 @@ function Calculator() {
     }
 
     const symbol: Symbol = { type: "button", source: button, value: button.value }
-    const displayValue: Symbol[] = (button.type === "value" && button.value !== "." && button.value !== "%" && ["answer", "error"].indexOf(lastSymbol.type) !== -1) ? [symbol] : [...symbols, symbol]
+    let displayValue: Symbol[]
+    if (button.type === "value" && button.value !== "." && button.value !== "%" && ["answer", "error"].indexOf(lastSymbol.type) !== -1) {
+      displayValue = [symbol]
+    } else if (button.value === "." && isNaN(Number(lastSymbol.value))) {
+      const zeroButton: Button = buttons.filter(item => item.value === "0")[0]
+      const zeroSymbol: Symbol = { type: "button", source: zeroButton, value: zeroButton.value }
+      displayValue = [...symbols, zeroSymbol, symbol]
+    } else {
+      displayValue = [...symbols, symbol]
+    }
     const display: Display = { value: [...displayValue] }
 
-    setCurrent(display)
+    setCurrentCalculation(display)
   }
 
   const handleEqual = () => {
-    const symbols = current.value
+    const symbols = currentCalculation.value
     const lastSymbol = symbols[symbols.length - 1]
 
     //remove last symbol in calculation if it is a decimal or operation
@@ -169,21 +269,21 @@ function Calculator() {
 
     try {
       const test: number = math.evaluate(solve)
-      const answer: Answer = { value: test, source: current }
+      const answer: Answer = { value: test, source: currentCalculation }
       const symbol: Symbol = { value: test.toString(), type: "answer", source: answer }
       const display: Display = { value: [symbol] }
-      setCurrent(display)
+      setCurrentCalculation(display)
     } catch (error) {
       console.log(error)
-      const answer: Answer = { value: -1, source: current }
+      const answer: Answer = { value: -1, source: currentCalculation }
       const symbol: Symbol = { value: "ERR", type: "error", source: answer }
       const display: Display = { value: [symbol] }
-      setCurrent(display)
+      setCurrentCalculation(display)
     }
   }
 
   const handleNeg = () => {
-    const symbols = current.value
+    const symbols = currentCalculation.value
     let solve: string = ""
     symbols.map((item) => {
       solve += item.value
@@ -191,37 +291,43 @@ function Calculator() {
 
     try {
       const test: number = math.evaluate(solve + "* -1")
-      const answer: Answer = { value: test, source: current }
+      const answer: Answer = { value: test, source: currentCalculation }
       const symbol: Symbol = { value: test.toString(), type: "answer", source: answer }
       const display: Display = { value: [symbol] }
-      setCurrent(display)
+      setCurrentCalculation(display)
     } catch (error) {
       console.log(error)
-      const answer: Answer = { value: -1, source: current }
+      const answer: Answer = { value: -1, source: currentCalculation }
       const symbol: Symbol = { value: "ERR", type: "error", source: answer }
       const display: Display = { value: [symbol] }
-      setCurrent(display)
+      setCurrentCalculation(display)
     }
+  }
+
+  const CalculatorGrid = () => {
+    return (
+      <div className="Calculator__grid">
+        {
+          buttons.map((button: Button) => (
+            <button
+              value={button.value}
+              key={button.name}
+              onClick={() => { handleClick(button) }}
+            >
+              {makeOperatorsLookNicer(button.value)}
+            </button>
+          ))
+        }
+      </div>
+    )
   }
 
   return (
     <div className="Calculator">
       <div className="Calculator__inner">
-        <div className="Calculator__display">
-          {current.value.map((item) => { return makeOperatorsLookNicer(item.value) })}
-        </div>
-        <div className="Calculator__grid">
-          {
-            buttons.map((button: Button) => (
-              <button
-                value={button.value}
-                key={button.name}
-                onClick={() => { handleClick(button) }}
-              >
-                {makeOperatorsLookNicer(button.value)}
-              </button>
-            ))
-          }
+        <div className="Calculator__backplate">
+          <CalculatorDisplay current={currentCalculation} />
+          <CalculatorGrid />
         </div>
       </div>
     </div>
