@@ -75,7 +75,7 @@ const doMath = (current: Display) => {
   const symbols = current.value
   const lastSymbol = symbols[symbols.length - 1]
 
-  //remove last symbol in calculation if it is a decimal or operation.
+  //remove last symbol in calculation if it is a decimal or operation
   const trimSymbols = (lastSymbol.value === "." || isOperation(lastSymbol.value)) ? symbols.slice(0, -1) : symbols
 
   let solve: string = ""
