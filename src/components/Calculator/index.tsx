@@ -50,7 +50,7 @@ const buttons: Button[] = [
 const defaultValue: Symbol = { value: "0", type: "answer", source: "root" }
 const defaultDisplay: Display = { value: [defaultValue] }
 
-const makeOperatorsLookNicer = (label: string) => {
+export const makeOperatorsLookNicer = (label: string) => {
   const operatorSymbols = {
     plus: "+",
     minus: "−",
