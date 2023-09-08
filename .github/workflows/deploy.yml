@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - troubleshoot-ci
 
 jobs:
   build:
@@ -36,7 +37,6 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Download artifact
@@ -44,6 +44,10 @@ jobs:
         with:
           name: production-files
           path: ./dist
+
+      - name: Some ls
+        run: |
+          ls -l /home/runner/work/a-calculator/a-calculator/dist || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
